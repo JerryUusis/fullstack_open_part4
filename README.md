@@ -7,4 +7,5 @@
 
 ## [Exercises 4.3-4.7](https://fullstackopen.com/osa4/sovelluksen_rakenne_ja_testauksen_alkeet#tehtavat-4-3-4-7)
 - 4.3 apufunktioita ja yksikkötestejä, step1 ✅
+- 4.4 apufunktioita ja yksikkötestejä, step2 ✅
 
