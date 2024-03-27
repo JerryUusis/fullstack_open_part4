@@ -78,6 +78,10 @@ describe("total likes", () => {
 });
 
 describe("highest likes", () => {
+  test("empty array returns 0", () => {
+    assert.deepStrictEqual(listHelper.favoriteBlog([]), []);
+  });
+
   test("return highest likes", () => {
     const result = listHelper.favoriteBlog(blogs);
     assert.deepStrictEqual(result, {
@@ -88,5 +92,18 @@ describe("highest likes", () => {
       likes: 12,
       __v: 0,
     });
+  });
+});
+
+describe("most blogs", () => {
+  test("parameter is empty array", () => {
+    assert.deepStrictEqual(listHelper.mostBlogs([]), []);
+  });
+  test("return most blogs", () => {
+    const result = {
+      author: "Robert C. Martin",
+      blogs: 3,
+    };
+    assert.deepStrictEqual(listHelper.mostBlogs(blogs), result);
   });
 });
