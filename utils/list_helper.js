@@ -110,8 +110,45 @@ const mostBlogs = (blogs) => {
       mostBlogs = author.blogs;
     }
   }
-  const indexOfMostBlogs = authors.findIndex((author) => author.blogs === mostBlogs);
+  const indexOfMostBlogs = authors.findIndex(
+    (author) => author.blogs === mostBlogs
+  );
   return authors[indexOfMostBlogs];
+};
+
+const mostLikes = (blogs) => {
+  if (blogs.length === 0) {
+    return [];
+  }
+  const authors = [];
+
+  for (const blog of blogs) {
+    const authorIndex = authors.findIndex(
+      (author) => author.author === blog.author
+    );
+    if (authorIndex === -1) {
+      authors.push({ author: blog.author, likes: 0 });
+    }
+  }
+  for (const author of authors) {
+    for (const blog of blogs) {
+      if (author.author === blog.author) {
+        author.likes += blog.likes;
+      }
+    }
+  }
+
+  let highestLikes = 0;
+  for (const author of authors) {
+    if (author.likes > highestLikes) {
+      highestLikes = author.likes;
+    }
+  }
+  const highestLikesIndex = authors.findIndex(
+    (author) => author.likes === highestLikes
+  );
+
+  return authors[highestLikesIndex];
 };
 
 module.exports = {
@@ -119,4 +156,5 @@ module.exports = {
   totalLikes,
   favoriteBlog,
   mostBlogs,
+  mostLikes,
 };

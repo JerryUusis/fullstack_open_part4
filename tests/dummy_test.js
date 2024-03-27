@@ -107,3 +107,16 @@ describe("most blogs", () => {
     assert.deepStrictEqual(listHelper.mostBlogs(blogs), result);
   });
 });
+
+describe("most likes", () => {
+    test("parameter is empty array", () => {
+        assert.deepStrictEqual(listHelper.mostLikes([]), [])
+    })
+    test("return object with most likes", () => {
+        const result = {
+            author: "Edsger W. Dijkstra",
+            likes: 17
+          }
+        assert.deepStrictEqual(listHelper.mostLikes(blogs), result)
+    })
+})
