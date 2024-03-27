@@ -10,4 +10,4 @@
 - 4.4 apufunktioita ja yksikkötestejä, step2 ✅
 - 4.5* apufunktioita ja yksikkötestejä, step3 ✅
 - 4.6*: apufunktioita ja yksikkötestejä, step4 ✅
-- 4.7*: apufunktioita ja yksikkötestejä, step5
+- 4.7*: apufunktioita ja yksikkötestejä, step5 ✅
