@@ -125,13 +125,13 @@ describe("api", () => {
       title: "Road to internship",
       author: "Teppo Kolehmainen",
       url: "www.blogspot.com/roadtointernship",
-      likes: null
+      likes: null,
     };
     // const response = await api.get("/api/blogs")
     const request = await api.post("/api/blogs").send(blog);
 
-    assert.deepStrictEqual(request.status, 201)
-    assert.deepStrictEqual(request.body.likes, 0)
+    assert.deepStrictEqual(request.status, 201);
+    assert.deepStrictEqual(request.body.likes, 0);
   });
   test("Blog object has default value 0 for likes key 'likes' is missing", async () => {
     const blog = {
@@ -141,7 +141,36 @@ describe("api", () => {
     };
     const request = await api.post("/api/blogs").send(blog);
 
-    assert.deepStrictEqual(request.status, 201)
-    assert.deepStrictEqual(request.body.likes, 0)
+    assert.deepStrictEqual(request.status, 201);
+    assert.deepStrictEqual(request.body.likes, 0);
+  });
+  test("server responds with 404 if Blog object is missing key 'title'", async () => {
+    const blog = {
+      author: "Teppo Kolehmainen",
+      url: "www.blogspot.com/roadtointernship",
+      likes: 4,
+    };
+    const request = await api.post("/api/blogs").send(blog);
+    assert.deepStrictEqual(request.status, 400);
+    assert.deepStrictEqual(request.res.text, "Bad request");
+  });
+  test("server responds with 404 if Blog object is missing key 'url'", async () => {
+    const blog = {
+      author: "Teppo Kolehmainen",
+      title: "Road to internship",
+      likes: 4,
+    };
+    const request = await api.post("/api/blogs").send(blog);
+    assert.deepStrictEqual(request.status, 400);
+    assert.deepStrictEqual(request.res.text, "Bad request");
+  });
+  test("server responds with 404 if Blog object is missing key 'title' and 'url'", async () => {
+    const blog = {
+      author: "Teppo Kolehmainen",
+      likes: 4,
+    };
+    const request = await api.post("/api/blogs").send(blog);
+    assert.deepStrictEqual(request.status, 400);
+    assert.deepStrictEqual(request.res.text, "Bad request");
   });
 });

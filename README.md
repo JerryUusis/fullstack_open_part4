@@ -17,3 +17,4 @@
 - 4.9: blogilistan testit, step 2 ✅
 - 4.10: blogilistan testit, step 3 ✅
 - 4.11*: blogilistan testit, step4 ✅
+- 4.12*: blogilistan testit, step5 ✅
