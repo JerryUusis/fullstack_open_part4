@@ -78,4 +78,24 @@ describe("api", () => {
       throw error;
     }
   });
+
+  test("entries in database don't have _id or __v values", async () => {
+    try {
+      const response = await api.get("/api/blogs");
+      const keys = Object.keys(response.body[0]);
+      assert.strictEqual(response.body._id, undefined);
+      assert.strictEqual(response.body.__v, undefined);
+    } catch (error) {
+      throw error;
+    }
+  });
+  test("entries contain a key 'id'", async () => {
+    try {
+      const response = await api.get("/api/blogs");
+      const keys = Object.keys(response.body[0]);
+      assert.strictEqual(keys.includes("id"), true);
+    } catch (error) {
+      throw error;
+    }
+  });
 });
