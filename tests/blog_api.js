@@ -101,20 +101,47 @@ describe("api", () => {
     try {
       const response = await api.get("/api/blogs");
 
-      const newBlogObject = {
+      const blog = {
         title: "Road to internship",
         author: "Teppo Kolehmainen",
         url: "www.blogspot.com/roadtointernship",
         likes: 3,
       };
-      const blog = new Blog(newBlogObject)
-      
+
       const request = await api.post("/api/blogs").send(blog);
       const afterPosting = await api.get("/api/blogs");
       assert.deepStrictEqual(request.status, 201);
-      assert.deepStrictEqual(afterPosting.body.length, (response.body.length + 1))
+      assert.deepStrictEqual(
+        afterPosting.body.length,
+        response.body.length + 1
+      );
     } catch (error) {
       throw error;
     }
+  });
+
+  test("Blog object has default value 0 for likes if no value is given", async () => {
+    const blog = {
+      title: "Road to internship",
+      author: "Teppo Kolehmainen",
+      url: "www.blogspot.com/roadtointernship",
+      likes: null
+    };
+    // const response = await api.get("/api/blogs")
+    const request = await api.post("/api/blogs").send(blog);
+
+    assert.deepStrictEqual(request.status, 201)
+    assert.deepStrictEqual(request.body.likes, 0)
+  });
+  test("Blog object has default value 0 for likes key 'likes' is missing", async () => {
+    const blog = {
+      title: "Road to internship",
+      author: "Teppo Kolehmainen",
+      url: "www.blogspot.com/roadtointernship",
+    };
+    const request = await api.post("/api/blogs").send(blog);
+
+    assert.deepStrictEqual(request.status, 201)
+    assert.deepStrictEqual(request.body.likes, 0)
   });
 });
