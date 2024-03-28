@@ -82,7 +82,6 @@ describe("api", () => {
   test("entries in database don't have _id or __v values", async () => {
     try {
       const response = await api.get("/api/blogs");
-      const keys = Object.keys(response.body[0]);
       assert.strictEqual(response.body._id, undefined);
       assert.strictEqual(response.body.__v, undefined);
     } catch (error) {
@@ -94,6 +93,26 @@ describe("api", () => {
       const response = await api.get("/api/blogs");
       const keys = Object.keys(response.body[0]);
       assert.strictEqual(keys.includes("id"), true);
+    } catch (error) {
+      throw error;
+    }
+  });
+  test("post operation increases the database length by 1", async () => {
+    try {
+      const response = await api.get("/api/blogs");
+
+      const newBlogObject = {
+        title: "Road to internship",
+        author: "Teppo Kolehmainen",
+        url: "www.blogspot.com/roadtointernship",
+        likes: 3,
+      };
+      const blog = new Blog(newBlogObject)
+      
+      const request = await api.post("/api/blogs").send(blog);
+      const afterPosting = await api.get("/api/blogs");
+      assert.deepStrictEqual(request.status, 201);
+      assert.deepStrictEqual(afterPosting.body.length, (response.body.length + 1))
     } catch (error) {
       throw error;
     }

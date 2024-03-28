@@ -15,3 +15,4 @@
 ## [Exercises 4.8.-4.12](https://fullstackopen.com/osa4/backendin_testaaminen#tehtavat-4-8-4-12)
 - 4.8: blogilistan testit, step 1 ✅
 - 4.9: blogilistan testit, step 2 ✅
+- 4.10: blogilistan testit, step 3 ✅
