@@ -11,3 +11,6 @@
 - 4.5* apufunktioita ja yksikkötestejä, step3 ✅
 - 4.6*: apufunktioita ja yksikkötestejä, step4 ✅
 - 4.7*: apufunktioita ja yksikkötestejä, step5 ✅
+
+## [Exercises 4.8.-4.12](https://fullstackopen.com/osa4/backendin_testaaminen#tehtavat-4-8-4-12)
+- 4.8: blogilistan testit, step 1 ✅
