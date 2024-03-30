@@ -18,3 +18,4 @@
 - 4.10: blogilistan testit, step 3 ✅
 - 4.11*: blogilistan testit, step4 ✅
 - 4.12*: blogilistan testit, step5 ✅
+- 4.13 blogilistan laajennus, step1 ✅

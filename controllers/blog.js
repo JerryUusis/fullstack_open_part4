@@ -1,11 +1,26 @@
 const blogRouter = require("express").Router();
 const Blog = require("../models/blog");
 
-blogRouter.get("/", (request, response) => {
-  Blog.find({}).then((blogs) => {
-    response.json(blogs);
-    console.log("Received a get request");
-  });
+blogRouter.get("/", async (request, response) => {
+  try {
+    const id = request.query.id;
+    // Regex pattern checks that query is valid MongoDB object ID
+    // if (id && !/^[0-9a-f-A-F]{24}$/) {
+    //   return response.status(400).end("bad request")
+    // }
+    if (id) {
+      const found = await Blog.findById(id);
+      if (found) {
+        return response.json(found);
+      } else {
+        return response.status(404).end("not found");
+      }
+    }
+    const data = await Blog.find({});
+    return response.json(data);
+  } catch (error) {
+    throw error;
+  }
 });
 
 blogRouter.post("/", (request, response) => {
@@ -17,8 +32,22 @@ blogRouter.post("/", (request, response) => {
   }
   blog.save().then((result) => {
     response.status(201).json(result);
-    console.log("Succesfully posted:", blog.title);
   });
+});
+
+blogRouter.delete("/:id", async (request, response) => {
+  try {
+    const blogs = await Blog.find({});
+    for (const blog of blogs) {
+      if (blog.id === request.params.id) {
+        await Blog.findByIdAndDelete(request.params.id);
+        return response.status(204).end();
+      }
+    }
+    return response.status(404).end("Not found");
+  } catch (error) {
+    throw error;
+  }
 });
 
 module.exports = blogRouter;
