@@ -145,10 +145,10 @@ describe("adding a new blog", () => {
         likes: 3,
       };
       const initialDB = await helper.blogsInDb();
-      const request = await api.post("/api/blogs").send(blog);
+      const response = await api.post("/api/blogs").send(blog);
       const afterPost = await helper.blogsInDb();
 
-      assert.strictEqual(request.status, 201);
+      assert.strictEqual(response.status, 201);
       assert.strictEqual(afterPost.length, initialDB.length + 1);
     } catch (error) {
       throw error;
@@ -162,10 +162,10 @@ describe("adding a new blog", () => {
       url: "www.blogspot.com/roadtointernship",
       likes: null,
     };
-    const request = await api.post("/api/blogs").send(blog);
+    const response = await api.post("/api/blogs").send(blog);
 
-    assert.strictEqual(request.status, 201);
-    assert.strictEqual(request.body.likes, 0);
+    assert.strictEqual(response.status, 201);
+    assert.strictEqual(response.body.likes, 0);
   });
 
   test("Blog object has default value 0 for likes key 'likes' is missing", async () => {
@@ -174,10 +174,10 @@ describe("adding a new blog", () => {
       author: "Teppo Kolehmainen",
       url: "www.blogspot.com/roadtointernship",
     };
-    const request = await api.post("/api/blogs").send(blog);
+    const response = await api.post("/api/blogs").send(blog);
 
-    assert.strictEqual(request.status, 201);
-    assert.strictEqual(request.body.likes, 0);
+    assert.strictEqual(response.status, 201);
+    assert.strictEqual(response.body.likes, 0);
   });
 
   test("blog is not added if Blog object is missing key 'title'", async () => {
@@ -186,9 +186,9 @@ describe("adding a new blog", () => {
       url: "www.blogspot.com/roadtointernship",
       likes: 4,
     };
-    const request = await api.post("/api/blogs").send(blog);
-    assert.strictEqual(request.status, 400);
-    assert.strictEqual(request.res.text, "Bad request");
+    const response = await api.post("/api/blogs").send(blog);
+    assert.strictEqual(response.status, 400);
+    assert.strictEqual(response.res.text, "bad request");
   });
 
   test("blog is not added if Blog object is missing key 'url'", async () => {
@@ -197,9 +197,9 @@ describe("adding a new blog", () => {
       title: "Road to internship",
       likes: 4,
     };
-    const request = await api.post("/api/blogs").send(blog);
-    assert.strictEqual(request.status, 400);
-    assert.strictEqual(request.res.text, "Bad request");
+    const response = await api.post("/api/blogs").send(blog);
+    assert.strictEqual(response.status, 400);
+    assert.strictEqual(response.res.text, "bad request");
   });
 
   test("blog is not added if Blog object is missing key 'title' and 'url'", async () => {
@@ -207,9 +207,9 @@ describe("adding a new blog", () => {
       author: "Teppo Kolehmainen",
       likes: 4,
     };
-    const request = await api.post("/api/blogs").send(blog);
-    assert.strictEqual(request.status, 400);
-    assert.strictEqual(request.res.text, "Bad request");
+    const response = await api.post("/api/blogs").send(blog);
+    assert.strictEqual(response.status, 400);
+    assert.strictEqual(response.res.text, "bad request");
   });
 });
 
@@ -230,18 +230,57 @@ describe("deletion of a blog", () => {
 
   test("server deletes one blog with id", async () => {
     const blogInDb = await helper.blogsInDb();
-    const request = await api.delete(`/api/blogs/${blogInDb[0].id}`);
+    const response = await api.delete(`/api/blogs/${blogInDb[0].id}`);
     // Database length changes after deletion
     const db = await helper.blogsInDb();
 
-    assert.strictEqual(request.status, 204);
+    assert.strictEqual(response.status, 204);
     assert.strictEqual(helper.initialBlogs.length - 1, db.length);
   });
 
   test("server returns status 404 with non-existing id", async () => {
     try {
-      const request = await api.delete(`/api/blogs/${helper.nonExistingId}`);
-      assert.strictEqual(request.status, 404);
+      const response = await api.delete(`/api/blogs/${helper.nonExistingId}`);
+      assert.strictEqual(response.status, 404);
+    } catch (error) {
+      throw error;
+    }
+  });
+});
+
+describe.only("updating a blog", () => {
+  beforeEach(async () => {
+    await mongoose.connect(config.MONGODB_STRING);
+    await Blog.deleteMany();
+    await Blog.insertMany(helper.initialBlogs);
+  });
+  after(async () => {
+    mongoose.connection.close();
+  });
+
+  test("succesful update with id", async () => {
+    try {
+      const blogs = await Blog.find({});
+      const blog = blogs[0];
+      const initialLikes = blog.likes;
+
+      const response = await api
+        .put(`/api/blogs/${blog.id}`)
+        .send({ likes: blog.likes + 1 });
+
+      assert.strictEqual(response.status, 200);
+      assert.strictEqual(initialLikes + 1, response.body.likes);
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  test("server returns status 404 with non-existing id", async () => {
+    try {
+      const response = await api
+        .put(`/api/blogs/${helper.nonExistingId}`)
+        .send({ likes: 11 });
+      assert.strictEqual(response.status, 404);
     } catch (error) {
       throw error;
     }

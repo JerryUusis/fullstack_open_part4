@@ -28,7 +28,7 @@ blogRouter.post("/", (request, response) => {
   const keys = Object.keys(request.body);
 
   if (keys.includes("title") === false || keys.includes("url") === false) {
-    return response.status(400).end("Bad request");
+    return response.status(400).end("bad request");
   }
   blog.save().then((result) => {
     response.status(201).json(result);
@@ -45,6 +45,18 @@ blogRouter.delete("/:id", async (request, response) => {
       }
     }
     return response.status(404).end("Not found");
+  } catch (error) {
+    throw error;
+  }
+});
+
+blogRouter.put("/:id", async (request, response) => {
+  try {
+    const blog = request.body;
+    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, {
+      new: true,
+    });
+    return response.json(updatedBlog);
   } catch (error) {
     throw error;
   }

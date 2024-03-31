@@ -1,7 +1,6 @@
 # Helsinki University Full Stack open Part 4
 
 ## [Exercises 4.1-4.2](https://fullstackopen.com/osa4/sovelluksen_rakenne_ja_testauksen_alkeet#tehtavat-4-1-4-2)
-
 - 4.1 blogilista, step1 ✅
 - 4.2 blogilista, step2 ✅
 
@@ -18,4 +17,7 @@
 - 4.10: blogilistan testit, step 3 ✅
 - 4.11*: blogilistan testit, step4 ✅
 - 4.12*: blogilistan testit, step5 ✅
+
+## [Exercises 4.13.-4.14](https://fullstackopen.com/osa4/backendin_testaaminen#tehtavat-4-13-4-14)
 - 4.13 blogilistan laajennus, step1 ✅
+- 4.14* blogilistan laajennus, step2 ✅
