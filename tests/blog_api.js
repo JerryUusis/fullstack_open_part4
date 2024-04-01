@@ -240,15 +240,17 @@ describe("deletion of a blog", () => {
 
   test("server returns status 404 with non-existing id", async () => {
     try {
-      const response = await api.delete(`/api/blogs/${helper.nonExistingId}`);
+      const nonExistingId = await helper.nonExistingId();
+      const response = await api.delete(`/api/blogs/${nonExistingId}`);
       assert.strictEqual(response.status, 404);
+      assert.strictEqual(response.text, "not found");
     } catch (error) {
       throw error;
     }
   });
 });
 
-describe.only("updating a blog", () => {
+describe("updating a blog", () => {
   beforeEach(async () => {
     await mongoose.connect(config.MONGODB_STRING);
     await Blog.deleteMany();
@@ -277,10 +279,12 @@ describe.only("updating a blog", () => {
 
   test("server returns status 404 with non-existing id", async () => {
     try {
+      const nonExistingId = await helper.nonExistingId();
       const response = await api
-        .put(`/api/blogs/${helper.nonExistingId}`)
+        .put(`/api/blogs/${nonExistingId}`)
         .send({ likes: 11 });
       assert.strictEqual(response.status, 404);
+      assert.strictEqual(response.text, "not found");
     } catch (error) {
       throw error;
     }

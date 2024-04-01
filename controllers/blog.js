@@ -44,7 +44,7 @@ blogRouter.delete("/:id", async (request, response) => {
         return response.status(204).end();
       }
     }
-    return response.status(404).end("Not found");
+    return response.status(404).end("not found");
   } catch (error) {
     throw error;
   }
@@ -52,11 +52,20 @@ blogRouter.delete("/:id", async (request, response) => {
 
 blogRouter.put("/:id", async (request, response) => {
   try {
-    const blog = request.body;
-    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, {
-      new: true,
-    });
-    return response.json(updatedBlog);
+    const blogs = await Blog.find({});
+    for (const blog of blogs) {
+      if (blog.id === request.params.id) {
+        const updatedBlog = await Blog.findByIdAndUpdate(
+          request.params.id,
+          request.body,
+          {
+            new: true,
+          }
+        );
+        return response.json(updatedBlog);
+      }
+    }
+    return response.status(404).end("not found");
   } catch (error) {
     throw error;
   }
