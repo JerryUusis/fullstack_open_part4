@@ -21,3 +21,6 @@
 ## [Exercises 4.13.-4.14](https://fullstackopen.com/osa4/backendin_testaaminen#tehtavat-4-13-4-14)
 - 4.13 blogilistan laajennus, step1 ✅
 - 4.14* blogilistan laajennus, step2 ✅
+
+## [Exercises 4.15.-4.23](https://fullstackopen.com/osa4/token_perustainen_kirjautuminen#tehtavat-4-15-4-23)
+- 4.15: blogilistan laajennus, step3 ✅
