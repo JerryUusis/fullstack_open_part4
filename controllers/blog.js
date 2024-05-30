@@ -1,5 +1,6 @@
 const blogRouter = require("express").Router();
 const Blog = require("../models/blog");
+const User = require("../models/user");
 
 blogRouter.get("/", async (request, response) => {
   try {
@@ -16,23 +17,42 @@ blogRouter.get("/", async (request, response) => {
         return response.status(404).end("not found");
       }
     }
-    const data = await Blog.find({});
+    const data = await Blog.find({}).populate("user", {
+      username: 1,
+      name: 1,
+    });
     return response.json(data);
   } catch (error) {
     throw error;
   }
 });
 
-blogRouter.post("/", (request, response) => {
-  const blog = new Blog(request.body);
-  const keys = Object.keys(request.body);
+blogRouter.post("/", async (request, response) => {
+  try {
+    const { title, author, url, likes } = request.body;
+    const user = await User.findById("66584e763e2bddec37232ba7");
 
-  if (keys.includes("title") === false || keys.includes("url") === false) {
-    return response.status(400).end("bad request");
+    const blog = new Blog({
+      title,
+      author,
+      url,
+      likes,
+      user: user._id,
+    });
+    const keys = Object.keys(request.body);
+
+    if (keys.includes("title") === false || keys.includes("url") === false) {
+      return response.status(400).end("bad request");
+    }
+
+    const savedBlog = await blog.save();
+    user.blogs = user.blogs.concat(savedBlog._id);
+    await user.save();
+
+    return response.status(201).json(savedBlog);
+  } catch (error) {
+    throw error;
   }
-  blog.save().then((result) => {
-    response.status(201).json(result);
-  });
 });
 
 blogRouter.delete("/:id", async (request, response) => {

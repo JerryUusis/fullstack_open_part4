@@ -1,6 +1,7 @@
 const { test, describe, after, beforeEach } = require("node:test");
 const assert = require("node:assert");
 const Blog = require("../models/blog");
+const User = require("../models/user");
 const supertest = require("supertest");
 const app = require("../app");
 const mongoose = require("mongoose");
@@ -138,6 +139,7 @@ describe("adding a new blog", () => {
 
   test("post operation increases the database length by 1", async () => {
     try {
+      const user = { id: "66584eb7e50a29d4e7f78a25" };
       const blog = {
         title: "Road to internship",
         author: "Teppo Kolehmainen",
@@ -155,12 +157,12 @@ describe("adding a new blog", () => {
     }
   });
 
-  test("Blog object has default value 0 for likes if no value is given", async () => {
+  test("Blog object has default value 0 for likes if likes is undefined", async () => {
     const blog = {
       title: "Road to internship",
       author: "Teppo Kolehmainen",
       url: "www.blogspot.com/roadtointernship",
-      likes: null,
+      likes: undefined,
     };
     const response = await api.post("/api/blogs").send(blog);
 
