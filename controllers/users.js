@@ -7,6 +7,17 @@ usersRouter.post("/", async (request, response) => {
   try {
     const { username, name, password } = request.body;
 
+    if (password === undefined) {
+      return response.status(400).json({ error: "password is missing" });
+    } else if (password.length < 3) {
+      return response
+        .status(400)
+        .json({ error: "expected `password` to have min 3 characters" });
+    }
+    if (username === undefined) {
+      return response.status(400).json({ error: "username is missing" });
+    }
+
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
@@ -19,8 +30,24 @@ usersRouter.post("/", async (request, response) => {
     const savedUser = await user.save();
     response.status(201).json(savedUser);
   } catch (error) {
-    console.error(error);
-    throw error;
+    if (
+      error.name === "MongoServerError" &&
+      error.message.includes("E11000 duplicate key error")
+    ) {
+      return response
+        .status(400)
+        .json({ error: "expected `username` to be unique" });
+    } else if (
+      error.name === "ValidationError" &&
+      error.message.includes("Path `username`")
+    ) {
+      return response
+        .status(400)
+        .json({ error: "expected `username` to have min 3 characters" });
+    } else {
+      console.error(error);
+      throw error;
+    }
   }
 });
 

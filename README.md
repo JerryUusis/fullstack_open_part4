@@ -24,3 +24,4 @@
 
 ## [Exercises 4.15.-4.23](https://fullstackopen.com/osa4/token_perustainen_kirjautuminen#tehtavat-4-15-4-23)
 - 4.15: blogilistan laajennus, step3 ✅
+- 4.16*: blogilistan laajennus, step4 ✅
