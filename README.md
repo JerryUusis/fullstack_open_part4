@@ -26,4 +26,5 @@
 - 4.15: blogilistan laajennus, step3 ✅
 - 4.16*: blogilistan laajennus, step4 ✅
 - 4.17: blogilistan laajennus, step5 ✅
-- 4.18: blogilistan laajennus, step5 ✅
+- 4.18: blogilistan laajennus, step6 ✅
+- 4.19: blogilistan laajennus, step7 ✅

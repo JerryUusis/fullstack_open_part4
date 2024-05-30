@@ -1,6 +1,15 @@
 const blogRouter = require("express").Router();
 const Blog = require("../models/blog");
 const User = require("../models/user");
+const jwt = require("jsonwebtoken");
+
+const getTokenFrom = (request) => {
+  const authorization = request.get("authorization");
+  if (authorization && authorization.startsWith("Bearer ")) {
+    return authorization.replace("Bearer ", "");
+  }
+  return null;
+};
 
 blogRouter.get("/", async (request, response) => {
   try {
@@ -30,7 +39,11 @@ blogRouter.get("/", async (request, response) => {
 blogRouter.post("/", async (request, response) => {
   try {
     const { title, author, url, likes } = request.body;
-    const user = await User.findById("66584e763e2bddec37232ba7");
+    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
+    if (!decodedToken.id) {
+      return response.status(401).json({ error: "token invalid" });
+    }
+    const user = await User.findById(decodedToken.id);
 
     const blog = new Blog({
       title,
@@ -51,6 +64,13 @@ blogRouter.post("/", async (request, response) => {
 
     return response.status(201).json(savedBlog);
   } catch (error) {
+    if (error.name === "JsonWebTokenError") {
+      return response.status(401).json({ error: "invalid token" });
+    } else if (error.name === "TokenExpiredError") {
+      return response.status(401).json({
+        error: "token expired",
+      });
+    }
     throw error;
   }
 });
