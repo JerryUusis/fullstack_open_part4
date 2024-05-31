@@ -11,7 +11,7 @@ blogRouter.get("/", async (request, response) => {
     if (found) {
       return response.json(found);
     } else {
-      return response.status(404).end("not found");
+      return response.status(404).json({ error: "not found" });
     }
   }
   const data = await Blog.find({}).populate("user", {
@@ -29,7 +29,7 @@ blogRouter.post("/", async (request, response) => {
 
   // Check if title or URL is missing in the request
   if (!keys.includes("title") || !keys.includes("url")) {
-    return response.status(400).end("bad request");
+    return response.status(400).json({ error: "bad request" });
   }
 
   // Check if token (extracted from request's Authorization header by tokenExtractor middleware) exists
@@ -63,14 +63,20 @@ blogRouter.post("/", async (request, response) => {
 });
 
 blogRouter.delete("/:id", async (request, response) => {
-  const blogs = await Blog.find({});
-  for (const blog of blogs) {
-    if (blog.id === request.params.id) {
-      await Blog.findByIdAndDelete(request.params.id);
-      return response.status(204).end();
-    }
+  if (!request.token) {
+    response.status(401).json({ error: "token missing" });
   }
-  return response.status(404).end("not found");
+
+  const decodedToken = jwt.verify(request.token, process.env.SECRET);
+
+  const blog = await Blog.findById(request.params.id);
+
+  if (!blog) {
+    return response.status(404).json({ error: "not found" });
+  } else if (blog.user.toString() === decodedToken.id) {
+    await Blog.findByIdAndDelete(request.params.id);
+    return response.status(200).json({ message: "blog deleted successfully" });
+  }
 });
 
 blogRouter.put("/:id", async (request, response) => {
@@ -87,7 +93,7 @@ blogRouter.put("/:id", async (request, response) => {
       return response.json(updatedBlog);
     }
   }
-  return response.status(404).end("not found");
+  return response.status(404).json({ error: "not found" });
 });
 
 module.exports = blogRouter;

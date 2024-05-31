@@ -47,6 +47,7 @@ describe("get operations", () => {
   test("query with nonexisting id returns status 404", async () => {
     const response = await api.get(`/api/blogs/${helper.nonExistingId}`);
     assert.strictEqual(response.status, 404);
+    assert.strictEqual(response.body.error, "unknown endpoint");
   });
 
   test("blog title can be found from returned blogs", async () => {
@@ -176,7 +177,7 @@ describe("adding a new blog", () => {
       .set("Authorization", `Bearer ${token}`)
       .send(blog);
     assert.strictEqual(response.status, 400);
-    assert.strictEqual(response.res.text, "bad request");
+    assert.strictEqual(response.body.error, "bad request");
   });
 
   test("blog is not added if Blog object is missing key 'url'", async () => {
@@ -190,7 +191,7 @@ describe("adding a new blog", () => {
       .set("Authorization", `Bearer ${token}`)
       .send(blog);
     assert.strictEqual(response.status, 400);
-    assert.strictEqual(response.res.text, "bad request");
+    assert.strictEqual(response.body.error, "bad request");
   });
 
   test("blog is not added if Blog object is missing key 'title' and 'url'", async () => {
@@ -203,15 +204,65 @@ describe("adding a new blog", () => {
       .set("Authorization", `Bearer ${token}`)
       .send(blog);
     assert.strictEqual(response.status, 400);
-    assert.strictEqual(response.res.text, "bad request");
+    assert.strictEqual(response.body.error, "bad request");
+  });
+  test("blog is not added if token is missing", async () => {
+    const blog = {
+      title: "Road to internship",
+      author: "Teppo Kolehmainen",
+      url: "www.blogspot.com/roadtointernship",
+      likes: 3,
+    };
+    const response = await api.post("/api/blogs").send(blog);
+    assert.strictEqual(response.status, 401);
+    assert.strictEqual(response.body.error, "token missing");
+  });
+
+  test("user id does not match the token", async () => {
+    const blog = {
+      title: "Road to internship",
+      author: "Teppo Kolehmainen",
+      url: "www.blogspot.com/roadtointernship",
+      likes: 3,
+    };
+    const nonExistingUserId = "1234567890";
+    const response = await api
+      .post("/api/blogs")
+      .send(blog)
+      .set("Authorization", `Bearer ${nonExistingUserId}`);
+    assert.strictEqual(response.status, 401);
+    assert.strictEqual(response.body.error, "invalid token");
   });
 });
 
 describe("deletion of a blog", () => {
+  let token;
   beforeEach(async () => {
     await mongoose.connect(config.MONGODB_STRING);
+    await User.deleteMany({});
     await Blog.deleteMany({});
-    await Blog.insertMany(helper.initialBlogs);
+
+    // Create new user and login.
+    const newUser = {
+      name: "Test User",
+      username: "testuser",
+      password: "test1234",
+    };
+    // Assign token value from loginResponse and set it in the Authorization header in tests
+    await api.post("/api/users").send(newUser);
+
+    const loginResponse = await api
+      .post("/api/login")
+      .send({ username: "testuser", password: "test1234" });
+
+    token = loginResponse.body.token;
+
+    for (const blog of helper.initialBlogs) {
+      await api
+        .post("/api/blogs")
+        .set("Authorization", `Bearer ${token}`)
+        .send(blog);
+    }
   });
 
   after(async () => {
@@ -220,19 +271,48 @@ describe("deletion of a blog", () => {
 
   test("server deletes one blog with id", async () => {
     const blogInDb = await helper.blogsInDb();
-    const response = await api.delete(`/api/blogs/${blogInDb[0].id}`);
+
+    const response = await api
+      .delete(`/api/blogs/${blogInDb[0].id}`)
+      .set("Authorization", `Bearer ${token}`);
     // Database length changes after deletion
     const db = await helper.blogsInDb();
 
-    assert.strictEqual(response.status, 204);
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(response.body.message, "blog deleted successfully");
     assert.strictEqual(helper.initialBlogs.length - 1, db.length);
   });
 
   test("server returns status 404 with non-existing id", async () => {
     const nonExistingId = await helper.nonExistingId();
-    const response = await api.delete(`/api/blogs/${nonExistingId}`);
+
+    const response = await api
+      .delete(`/api/blogs/${nonExistingId}`)
+      .set("Authorization", `Bearer ${token}`);
     assert.strictEqual(response.status, 404);
-    assert.strictEqual(response.text, "not found");
+    assert.strictEqual(response.body.error, "not found");
+  });
+  test("token is missing", async () => {
+    const blogs = await Blog.find({});
+
+    const response = await api.delete(`/api/blogs/${blogs[0].id}`);
+    assert.strictEqual(response.status, 401);
+    assert.strictEqual(response.body.error, "token missing");
+  });
+  test("user does not match the id in the blog's user object", async () => {
+    const blogs = await Blog.find({});
+    const blog = blogs[0];
+
+    const nonExistingUserId = "123456789";
+    JSON.stringify(nonExistingUserId);
+
+    const response = await api
+      .delete(`/api/blogs/${blog.id}`)
+      .set("Authorization", `Bearer ${nonExistingUserId}`)
+      .expect("Content-Type", /application\/json/);
+
+    assert.strictEqual(response.status, 401);
+    assert.strictEqual(response.body.error, "invalid token");
   });
 });
 
@@ -265,6 +345,6 @@ describe("updating a blog", () => {
       .put(`/api/blogs/${nonExistingId}`)
       .send({ likes: 11 });
     assert.strictEqual(response.status, 404);
-    assert.strictEqual(response.text, "not found");
+    assert.strictEqual(response.body.error, "not found");
   });
 });
