@@ -8,6 +8,17 @@ const requestLogger = (request, response, next) => {
   next();
 };
 
+const tokenExtractor = (request, response, next) => {
+  // Extract the value of authorization header from the request
+  const authorization = request.get("authorization");
+  // If authorization exists and starts with "Bearer ", then replace it with an empty string leaving the token's actual value only in Authorization header
+  // Store the token in request.token
+  if (authorization && authorization.startsWith("Bearer ")) {
+    request.token = authorization.replace("Bearer ", "");
+  }
+  next();
+};
+
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: "unknown endpoint" });
 };
@@ -37,4 +48,9 @@ const errorHandler = (error, request, response, next) => {
   next(error);
 };
 
-module.exports = { requestLogger, unknownEndpoint, errorHandler };
+module.exports = {
+  requestLogger,
+  unknownEndpoint,
+  errorHandler,
+  tokenExtractor,
+};
