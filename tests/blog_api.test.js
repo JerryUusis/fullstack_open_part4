@@ -21,116 +21,95 @@ describe("get operations", () => {
   });
 
   test("blogs are returned as json", async () => {
-    try {
-      const response = await api.get("/api/blogs");
-      assert.strictEqual(response.status, 200);
-      assert.strictEqual(
-        response.headers["content-type"],
-        "application/json; charset=utf-8"
-      );
-    } catch (error) {
-      throw error;
-    }
+    const response = await api.get("/api/blogs");
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(
+      response.headers["content-type"],
+      "application/json; charset=utf-8"
+    );
   });
 
   test("all blogs are returned", async () => {
-    try {
-      const response = await api.get("/api/blogs");
-      const db = await helper.blogsInDb();
-      assert.strictEqual(response.status, 200);
-      assert.strictEqual(response.body.length, db.length);
-    } catch (error) {
-      throw error;
-    }
+    const response = await api.get("/api/blogs");
+    const db = await helper.blogsInDb();
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(response.body.length, db.length);
   });
 
   test("query with an id returns one object with matching id", async () => {
-    try {
-      const db = await helper.blogsInDb();
-      const response = await api.get(`/api/blogs?id=${db[0].id}`);
+    const db = await helper.blogsInDb();
+    const response = await api.get(`/api/blogs?id=${db[0].id}`);
 
-      assert.strictEqual(response.status, 200);
-      assert.deepStrictEqual(db[0], response.body);
-    } catch (error) {
-      throw error;
-    }
+    assert.strictEqual(response.status, 200);
+    assert.deepStrictEqual(db[0], response.body);
   });
 
   test("query with nonexisting id returns status 404", async () => {
-    try {
-      const response = await api.get(`/api/blogs/${helper.nonExistingId}`);
-      assert.strictEqual(response.status, 404);
-    } catch (error) {
-      throw error;
-    }
+    const response = await api.get(`/api/blogs/${helper.nonExistingId}`);
+    assert.strictEqual(response.status, 404);
   });
 
   test("blog title can be found from returned blogs", async () => {
-    try {
-      const response = await api.get("/api/blogs");
+    const response = await api.get("/api/blogs");
 
-      const contents = response.body.map((r) => r.title);
-      assert(contents.includes("React patterns"));
-    } catch (error) {
-      throw error;
-    }
+    const contents = response.body.map((r) => r.title);
+    assert(contents.includes("React patterns"));
   });
 
   test("database is empty after deleting all", async () => {
-    try {
-      await Blog.deleteMany({});
-      const db = await Blog.find({});
-      const response = await api.get("/api/blogs");
-      assert.strictEqual(response.status, 200);
-      assert.strictEqual(db.length, 0);
-    } catch (error) {
-      throw error;
-    }
+    await Blog.deleteMany({});
+    const db = await Blog.find({});
+    const response = await api.get("/api/blogs");
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(db.length, 0);
   });
 
   test("database returns 1 blog after deleting one", async () => {
-    try {
-      await Blog.deleteOne({ author: "Michael Chan" });
-      const db = await Blog.find({});
-      const response = await api.get("/api/blogs");
-      assert.strictEqual(response.status, 200);
-      assert.strictEqual(db.length, 1);
-    } catch (error) {
-      throw error;
-    }
+    await Blog.deleteOne({ author: "Michael Chan" });
+    const db = await Blog.find({});
+    const response = await api.get("/api/blogs");
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(db.length, 1);
   });
 
   test("entries in database don't have _id or __v values", async () => {
-    try {
-      const response = await api.get("/api/blogs");
-      for (const blog of response.body) {
-        assert.strictEqual(response.status, 200);
-        assert.strictEqual(blog.__v, undefined);
-        assert.strictEqual(blog._id, undefined);
-      }
-      throw error;
-    } catch (error) {}
+    const response = await api.get("/api/blogs");
+    for (const blog of response.body) {
+      assert.strictEqual(response.status, 200);
+      assert.strictEqual(blog.__v, undefined);
+      assert.strictEqual(blog._id, undefined);
+    }
   });
 
   test("entries contain a key 'id'", async () => {
-    try {
-      const response = await api.get("/api/blogs");
-      const keys = Object.keys(response.body[0]);
-      assert.strictEqual(keys.includes("id"), true);
-    } catch (error) {
-      throw error;
-    }
+    const response = await api.get("/api/blogs");
+    const keys = Object.keys(response.body[0]);
+    assert.strictEqual(keys.includes("id"), true);
   });
 });
 
 describe("adding a new blog", () => {
+  // Emulates the jwt token that is required to post new blogs
+  let token;
   beforeEach(async () => {
-    try {
-      await mongoose.connect(config.MONGODB_STRING);
-      await Blog.deleteMany({});
-    } catch (error) {
-      throw error;
-    }
+    // Delete all entries from users and blogs collections
+    await mongoose.connect(config.MONGODB_STRING);
+    await Blog.deleteMany({});
+    await User.deleteMany({});
+
+    const newUser = {
+      name: "Test User",
+      username: "testuser",
+      password: "test1234",
+    };
+
+    // Create new user and login.
+    // Assign token value from loginResponse and set it in the Authorization header in tests
+    await api.post("/api/users").send(newUser);
+    const loginResponse = await api
+      .post("/api/login")
+      .send({ username: "testuser", password: "test1234" });
+    token = loginResponse.body.token;
   });
 
   after(async () => {
@@ -138,23 +117,21 @@ describe("adding a new blog", () => {
   });
 
   test("post operation increases the database length by 1", async () => {
-    try {
-      const user = { id: "66584eb7e50a29d4e7f78a25" };
-      const blog = {
-        title: "Road to internship",
-        author: "Teppo Kolehmainen",
-        url: "www.blogspot.com/roadtointernship",
-        likes: 3,
-      };
-      const initialDB = await helper.blogsInDb();
-      const response = await api.post("/api/blogs").send(blog);
-      const afterPost = await helper.blogsInDb();
+    const blog = {
+      title: "Road to internship",
+      author: "Teppo Kolehmainen",
+      url: "www.blogspot.com/roadtointernship",
+      likes: 3,
+    };
+    const initialDB = await helper.blogsInDb();
+    const response = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(blog);
+    const afterPost = await helper.blogsInDb();
 
-      assert.strictEqual(response.status, 201);
-      assert.strictEqual(afterPost.length, initialDB.length + 1);
-    } catch (error) {
-      throw error;
-    }
+    assert.strictEqual(response.status, 201);
+    assert.strictEqual(afterPost.length, initialDB.length + 1);
   });
 
   test("Blog object has default value 0 for likes if likes is undefined", async () => {
@@ -164,7 +141,10 @@ describe("adding a new blog", () => {
       url: "www.blogspot.com/roadtointernship",
       likes: undefined,
     };
-    const response = await api.post("/api/blogs").send(blog);
+    const response = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(blog);
 
     assert.strictEqual(response.status, 201);
     assert.strictEqual(response.body.likes, 0);
@@ -176,7 +156,10 @@ describe("adding a new blog", () => {
       author: "Teppo Kolehmainen",
       url: "www.blogspot.com/roadtointernship",
     };
-    const response = await api.post("/api/blogs").send(blog);
+    const response = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(blog);
 
     assert.strictEqual(response.status, 201);
     assert.strictEqual(response.body.likes, 0);
@@ -188,7 +171,10 @@ describe("adding a new blog", () => {
       url: "www.blogspot.com/roadtointernship",
       likes: 4,
     };
-    const response = await api.post("/api/blogs").send(blog);
+    const response = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(blog);
     assert.strictEqual(response.status, 400);
     assert.strictEqual(response.res.text, "bad request");
   });
@@ -199,7 +185,10 @@ describe("adding a new blog", () => {
       title: "Road to internship",
       likes: 4,
     };
-    const response = await api.post("/api/blogs").send(blog);
+    const response = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(blog);
     assert.strictEqual(response.status, 400);
     assert.strictEqual(response.res.text, "bad request");
   });
@@ -209,7 +198,10 @@ describe("adding a new blog", () => {
       author: "Teppo Kolehmainen",
       likes: 4,
     };
-    const response = await api.post("/api/blogs").send(blog);
+    const response = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(blog);
     assert.strictEqual(response.status, 400);
     assert.strictEqual(response.res.text, "bad request");
   });
@@ -217,13 +209,9 @@ describe("adding a new blog", () => {
 
 describe("deletion of a blog", () => {
   beforeEach(async () => {
-    try {
-      await mongoose.connect(config.MONGODB_STRING);
-      await Blog.deleteMany({});
-      await Blog.insertMany(helper.initialBlogs);
-    } catch (error) {
-      throw error;
-    }
+    await mongoose.connect(config.MONGODB_STRING);
+    await Blog.deleteMany({});
+    await Blog.insertMany(helper.initialBlogs);
   });
 
   after(async () => {
@@ -241,14 +229,10 @@ describe("deletion of a blog", () => {
   });
 
   test("server returns status 404 with non-existing id", async () => {
-    try {
-      const nonExistingId = await helper.nonExistingId();
-      const response = await api.delete(`/api/blogs/${nonExistingId}`);
-      assert.strictEqual(response.status, 404);
-      assert.strictEqual(response.text, "not found");
-    } catch (error) {
-      throw error;
-    }
+    const nonExistingId = await helper.nonExistingId();
+    const response = await api.delete(`/api/blogs/${nonExistingId}`);
+    assert.strictEqual(response.status, 404);
+    assert.strictEqual(response.text, "not found");
   });
 });
 
@@ -263,32 +247,24 @@ describe("updating a blog", () => {
   });
 
   test("succesful update with id", async () => {
-    try {
-      const blogs = await Blog.find({});
-      const blog = blogs[0];
-      const initialLikes = blog.likes;
+    const blogs = await Blog.find({});
+    const blog = blogs[0];
+    const initialLikes = blog.likes;
 
-      const response = await api
-        .put(`/api/blogs/${blog.id}`)
-        .send({ likes: blog.likes + 1 });
+    const response = await api
+      .put(`/api/blogs/${blog.id}`)
+      .send({ likes: blog.likes + 1 });
 
-      assert.strictEqual(response.status, 200);
-      assert.strictEqual(initialLikes + 1, response.body.likes);
-    } catch (error) {
-      throw error;
-    }
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(initialLikes + 1, response.body.likes);
   });
 
   test("server returns status 404 with non-existing id", async () => {
-    try {
-      const nonExistingId = await helper.nonExistingId();
-      const response = await api
-        .put(`/api/blogs/${nonExistingId}`)
-        .send({ likes: 11 });
-      assert.strictEqual(response.status, 404);
-      assert.strictEqual(response.text, "not found");
-    } catch (error) {
-      throw error;
-    }
+    const nonExistingId = await helper.nonExistingId();
+    const response = await api
+      .put(`/api/blogs/${nonExistingId}`)
+      .send({ likes: 11 });
+    assert.strictEqual(response.status, 404);
+    assert.strictEqual(response.text, "not found");
   });
 });
