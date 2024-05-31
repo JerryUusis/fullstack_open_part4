@@ -1,7 +1,6 @@
 const blogRouter = require("express").Router();
 const Blog = require("../models/blog");
-const User = require("../models/user");
-const jwt = require("jsonwebtoken");
+const { userExtractor } = require("../utils/middleware");
 
 blogRouter.get("/", async (request, response) => {
   const id = request.query.id;
@@ -22,28 +21,18 @@ blogRouter.get("/", async (request, response) => {
 });
 
 // Post a new blog and link it to a specific user
-blogRouter.post("/", async (request, response) => {
+blogRouter.post("/", userExtractor, async (request, response) => {
+  // Get user with userExtractor middleware
+  const user = request.user;
+
   const { title, author, url, likes } = request.body;
 
   const keys = Object.keys(request.body);
 
-  // Check if title or URL is missing in the request
+  // Check if title or URL is missing in the request body
   if (!keys.includes("title") || !keys.includes("url")) {
     return response.status(400).json({ error: "bad request" });
   }
-
-  // Check if token (extracted from request's Authorization header by tokenExtractor middleware) exists
-  if (!request.token) {
-    return response.status(401).json({ error: "token missing" });
-  }
-  // Decrypt the token
-  const decodedToken = jwt.verify(request.token, process.env.SECRET);
-
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: "token invalid" });
-  }
-  // Use id to find the matching user from users collection
-  const user = await User.findById(decodedToken.id);
 
   // Create a new blog object and link the user id to the user key in blog object
   const blog = new Blog({
@@ -62,18 +51,15 @@ blogRouter.post("/", async (request, response) => {
   return response.status(201).json(savedBlog);
 });
 
-blogRouter.delete("/:id", async (request, response) => {
-  if (!request.token) {
-    response.status(401).json({ error: "token missing" });
-  }
-
-  const decodedToken = jwt.verify(request.token, process.env.SECRET);
+blogRouter.delete("/:id", userExtractor, async (request, response) => {
+  // Get user using userExtractor middleware
+  const user = request.user;
 
   const blog = await Blog.findById(request.params.id);
 
   if (!blog) {
     return response.status(404).json({ error: "not found" });
-  } else if (blog.user.toString() === decodedToken.id) {
+  } else if (blog.user.toString() === user.id) {
     await Blog.findByIdAndDelete(request.params.id);
     return response.status(200).json({ message: "blog deleted successfully" });
   }
